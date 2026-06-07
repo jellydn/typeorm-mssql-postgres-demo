@@ -1,16 +1,23 @@
+import "dotenv/config";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import { AppDataSource } from "../data-source";
+import { UserRepository } from "../repositories/UserRepository";
 import { UserService } from "../services/UserService";
 
-const userService = new UserService();
-
 describe("UserService", () => {
+	let userService: UserService;
+
 	beforeAll(async () => {
 		await AppDataSource.initialize();
+		userService = new UserService(
+			UserRepository.fromDataSource(AppDataSource),
+		);
 	});
 
 	afterAll(async () => {
-		await AppDataSource.destroy();
+		if (AppDataSource.isInitialized) {
+			await AppDataSource.destroy();
+		}
 	});
 
 	afterEach(async () => {
