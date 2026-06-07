@@ -25,7 +25,7 @@ app.get("/users/:email", async (c) => {
 
 app.post("/users", async (c) => {
 	try {
-		const body = await c.json();
+		const body = await c.req.json();
 		const user = await userService.createUser(body);
 		return c.json(user, 201);
 	} catch (error) {
@@ -35,7 +35,7 @@ app.post("/users", async (c) => {
 
 app.patch("/users/:id", async (c) => {
 	const id = parseInt(c.req.param("id"));
-	const body = await c.json();
+	const body = await c.req.json();
 	const user = await userService.updateUser(id, body);
 	if (!user) {
 		return c.json({ error: "User not found" }, 404);
