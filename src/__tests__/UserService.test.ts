@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "bun:test";
 import { AppDataSource } from "../data-source";
 import { UserService } from "../services/UserService";
 
@@ -13,6 +13,13 @@ describe("UserService", () => {
 		await AppDataSource.destroy();
 	});
 
+	afterEach(async () => {
+		const users = await userService.getAllUsers();
+		for (const user of users) {
+			await userService.deleteUser(user.id);
+		}
+	});
+
 	it("should create a user", async () => {
 		const user = await userService.createUser({ email: "test@example.com" });
 		expect(user).toBeDefined();
@@ -21,15 +28,18 @@ describe("UserService", () => {
 	});
 
 	it("should find user by email", async () => {
-		const user = await userService.getUserByEmail("test@example.com");
+		await userService.createUser({ email: "find@example.com" });
+		const user = await userService.getUserByEmail("find@example.com");
 		expect(user).toBeDefined();
-		expect(user?.email).toBe("test@example.com");
+		expect(user?.email).toBe("find@example.com");
 	});
 
 	it("should return all users", async () => {
+		await userService.createUser({ email: "all1@example.com" });
+		await userService.createUser({ email: "all2@example.com" });
 		const users = await userService.getAllUsers();
 		expect(Array.isArray(users)).toBe(true);
-		expect(users.length).toBeGreaterThan(0);
+		expect(users.length).toBe(2);
 	});
 
 	it("should update user", async () => {

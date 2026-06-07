@@ -1,30 +1,34 @@
 import type { User } from "../entities/User";
 import { UserRepository } from "../repositories/UserRepository";
 
-const userRepository = new UserRepository();
+let _repo: UserRepository | null = null;
+const getRepo = () => {
+	if (!_repo) _repo = new UserRepository();
+	return _repo;
+};
 
 export class UserService {
 	async getUserByEmail(email: string): Promise<User | null> {
-		return userRepository.findByEmail(email);
+		return getRepo().findByEmail(email);
 	}
 
 	async getAllUsers(): Promise<User[]> {
-		return userRepository.findAll();
+		return getRepo().findAll();
 	}
 
 	async createUser(userData: Partial<User>): Promise<User> {
-		const existingUser = await userRepository.findByEmail(userData.email || "");
+		const existingUser = await getRepo().findByEmail(userData.email || "");
 		if (existingUser) {
 			throw new Error("User with this email already exists");
 		}
-		return userRepository.create(userData);
+		return getRepo().create(userData);
 	}
 
 	async updateUser(id: number, userData: Partial<User>): Promise<User | null> {
-		return userRepository.update(id, userData);
+		return getRepo().update(id, userData);
 	}
 
 	async deleteUser(id: number): Promise<boolean> {
-		return userRepository.delete(id);
+		return getRepo().delete(id);
 	}
 }

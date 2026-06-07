@@ -1,29 +1,33 @@
 import { AppDataSource } from "../data-source";
 import { User } from "../entities/User";
 
-const userRepository = AppDataSource.getRepository(User);
+let _repo: ReturnType<typeof AppDataSource.getRepository<User>> | null = null;
+const getRepo = () => {
+	if (!_repo) _repo = AppDataSource.getRepository(User);
+	return _repo;
+};
 
 export class UserRepository {
 	async findByEmail(email: string): Promise<User | null> {
-		return userRepository.findOneBy({ email });
+		return getRepo().findOneBy({ email });
 	}
 
 	async findAll(): Promise<User[]> {
-		return userRepository.find();
+		return getRepo().find();
 	}
 
 	async create(userData: Partial<User>): Promise<User> {
-		const user = userRepository.create(userData);
-		return userRepository.save(user);
+		const user = getRepo().create(userData);
+		return getRepo().save(user);
 	}
 
 	async update(id: number, userData: Partial<User>): Promise<User | null> {
-		await userRepository.update(id, userData);
-		return userRepository.findOneBy({ id });
+		await getRepo().update(id, userData);
+		return getRepo().findOneBy({ id });
 	}
 
 	async delete(id: number): Promise<boolean> {
-		const result = await userRepository.delete(id);
+		const result = await getRepo().delete(id);
 		return (
 			result.affected !== null &&
 			result.affected !== undefined &&
