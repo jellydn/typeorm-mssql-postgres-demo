@@ -1,0 +1,25 @@
+{
+  "name": "typeorm-mssql-postgres-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Practical demo: one TypeORM codebase supporting MSSQL and PostgreSQL via DataSource config and small dialect helpers.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "dev:pg": "DB_TYPE=postgres tsx src/index.ts",
+    "dev:mssql": "DB_TYPE=mssql tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@types/node": "^22.10.5",
+    "dotenv": "^16.4.7",
+    "mssql": "^11.0.1",
+    "pg": "^8.13.1",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.20"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
