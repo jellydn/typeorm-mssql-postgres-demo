@@ -14,12 +14,36 @@ A practical demonstration of using one TypeORM codebase to support MSSQL and Pos
 
 ```bash
 # 1. Start databases
-docker compose up -d
+docker compose up -d postgres mssql
+# or: just db-up
 
 # 2. Choose your database and run
 bun run dev:postgres   # or
 bun run dev:mssql
 ```
+
+### Docker (API + database)
+
+```bash
+# PostgreSQL stack (API on http://localhost:3000)
+docker compose --profile app up --build
+# or: just docker-up
+
+# MSSQL stack
+docker compose --profile app-mssql up --build
+# or: just docker-up-mssql
+
+# Databases only (run API on the host with bun)
+docker compose up -d postgres mssql
+```
+
+| Compose profile | Services        | Use case                          |
+| --------------- | --------------- | --------------------------------- |
+| *(default)*     | `postgres`, `mssql` | Local dev / tests on the host |
+| `app`           | `postgres` + `api`  | Full stack on PostgreSQL        |
+| `app-mssql`     | `mssql` + `api-mssql` | Full stack on MSSQL           |
+
+Set `API_PORT` if port 3000 is taken. MSSQL SA password in Compose is `YourStrongPass123` (must meet SQL Server complexity rules).
 
 ## Architecture
 
@@ -69,7 +93,7 @@ cp .env.mssql .env
 | Variable       | Description       | Example (PostgreSQL)                       | Example (MSSQL)                                                                        |
 | -------------- | ----------------- | ------------------------------------------ | -------------------------------------------------------------------------------------- |
 | `DB_TYPE`      | Database type     | `postgres`                                 | `mssql`                                                                                |
-| `DATABASE_URL` | Connection string | `postgres://user:pass@localhost:5432/demo` | `Server=localhost;Database=demo;User Id=sa;Password=pass;TrustServerCertificate=true;` |
+| `DATABASE_URL` | Connection string | `postgres://user:pass@localhost:5432/demo` | `Server=localhost,1433;Database=demo;User Id=sa;Password=YourStrongPass123;TrustServerCertificate=true;` |
 
 ## API Endpoints
 
