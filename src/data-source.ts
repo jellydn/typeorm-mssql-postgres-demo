@@ -1,14 +1,20 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
+import {
+	isDbLoggingEnabled,
+	isDbSynchronizeEnabled,
+	parseDbType,
+	requireDatabaseUrl,
+} from "./config/env";
 import { User } from "./entities/User";
 
-const DB_TYPE = (process.env.DB_TYPE || "postgres") as "postgres" | "mssql";
+const dbType = parseDbType(process.env.DB_TYPE);
 
 export const AppDataSource = new DataSource({
-	type: DB_TYPE,
-	url: process.env.DATABASE_URL,
-	synchronize: true,
-	logging: true,
+	type: dbType,
+	url: requireDatabaseUrl(),
+	synchronize: isDbSynchronizeEnabled(),
+	logging: isDbLoggingEnabled(),
 	entities: [User],
-	extra: DB_TYPE === "mssql" ? { trustServerCertificate: true } : {},
+	extra: dbType === "mssql" ? { trustServerCertificate: true } : {},
 });
