@@ -1,28 +1,37 @@
-import { Hono } from 'hono';
-import { serve } from '@hono/node-server';
-import { AppDataSource } from './data-source';
-import { User } from './entity/User';
+import "dotenv/config";
+import { serve } from "@hono/node-server";
+import { createApp } from "./app";
+import { getListenConfig } from "./config/env";
+import { AppDataSource } from "./data-source";
+import { getDatabaseType } from "./dialect/helpers";
+import { UserRepository } from "./repositories/UserRepository";
+import { UserService } from "./services/UserService";
 
-const app = new Hono();
+async function main(): Promise<void> {
+	await AppDataSource.initialize();
 
-app.get('/', (c) => c.text('Hello Hono + TypeORM!'));
+	const userService = new UserService(
+		UserRepository.fromDataSource(AppDataSource),
+	);
+	const app = createApp(userService);
+	const { port, hostname } = getListenConfig();
 
-app.get('/users', async (c) => {
-  const userRepo = AppDataSource.getRepository(User);
-  const users = await userRepo.find();
-  return c.json(users);
+	console.log(`Connected to ${getDatabaseType()}`);
+
+	const shutdown = async () => {
+		if (AppDataSource.isInitialized) {
+			await AppDataSource.destroy();
+		}
+		process.exit(0);
+	};
+	process.on("SIGINT", shutdown);
+	process.on("SIGTERM", shutdown);
+
+	serve({ fetch: app.fetch, port, hostname });
+	console.log(`Server running on http://${hostname}:${port}`);
+}
+
+main().catch((err) => {
+	console.error(err);
+	process.exit(1);
 });
-
-app.post('/users', async (c) => {
-  const body = await c.json();
-  const userRepo = AppDataSource.getRepository(User);
-  const user = userRepo.create(body);
-  await userRepo.save(user);
-  return c.json(user);
-});
-
-AppDataSource.initialize().then(() => {
-  console.log(`Connected to ${process.env.DB_TYPE || 'postgres'}`);
-  serve({ fetch: app.fetch, port: 3000 });
-  console.log('Server running on http://localhost:3000');
-}).catch((err) => console.error(err));
