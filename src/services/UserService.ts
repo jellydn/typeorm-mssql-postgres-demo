@@ -1,34 +1,41 @@
 import type { User } from "../entities/User";
+import type { CreateUserInput, UpdateUserInput } from "../types/user-io";
+import { UserAlreadyExistsError } from "../errors/user";
 import { UserRepository } from "../repositories/UserRepository";
-
-let _repo: UserRepository | null = null;
-const getRepo = () => {
-	if (!_repo) _repo = new UserRepository();
-	return _repo;
-};
+import { rethrowIfUniqueViolation } from "./errors";
 
 export class UserService {
+	constructor(private readonly users: UserRepository) {}
+
 	async getUserByEmail(email: string): Promise<User | null> {
-		return getRepo().findByEmail(email);
+		return this.users.findByEmail(email);
 	}
 
 	async getAllUsers(): Promise<User[]> {
-		return getRepo().findAll();
+		return this.users.findAll();
 	}
 
-	async createUser(userData: Partial<User>): Promise<User> {
-		const existingUser = await getRepo().findByEmail(userData.email || "");
-		if (existingUser) {
-			throw new Error("User with this email already exists");
+	async createUser(input: CreateUserInput): Promise<User> {
+		const existing = await this.users.findByEmail(input.email);
+		if (existing) {
+			throw new UserAlreadyExistsError();
 		}
-		return getRepo().create(userData);
+		try {
+			return await this.users.create(input.email);
+		} catch (error) {
+			rethrowIfUniqueViolation(error);
+		}
 	}
 
-	async updateUser(id: number, userData: Partial<User>): Promise<User | null> {
-		return getRepo().update(id, userData);
+	async updateUser(id: number, input: UpdateUserInput): Promise<User | null> {
+		try {
+			return await this.users.update(id, input);
+		} catch (error) {
+			rethrowIfUniqueViolation(error);
+		}
 	}
 
 	async deleteUser(id: number): Promise<boolean> {
-		return getRepo().delete(id);
+		return this.users.delete(id);
 	}
 }

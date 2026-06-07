@@ -1,37 +1,36 @@
-import { AppDataSource } from "../data-source";
+import type { DataSource, Repository } from "typeorm";
 import { User } from "../entities/User";
-
-let _repo: ReturnType<typeof AppDataSource.getRepository<User>> | null = null;
-const getRepo = () => {
-	if (!_repo) _repo = AppDataSource.getRepository(User);
-	return _repo;
-};
+import type { UpdateUserInput } from "../types/user-io";
 
 export class UserRepository {
+	constructor(private readonly repo: Repository<User>) {}
+
+	static fromDataSource(dataSource: DataSource): UserRepository {
+		return new UserRepository(dataSource.getRepository(User));
+	}
+
 	async findByEmail(email: string): Promise<User | null> {
-		return getRepo().findOneBy({ email });
+		return this.repo.findOneBy({ email });
 	}
 
 	async findAll(): Promise<User[]> {
-		return getRepo().find();
+		return this.repo.find();
 	}
 
-	async create(userData: Partial<User>): Promise<User> {
-		const user = getRepo().create(userData);
-		return getRepo().save(user);
+	async create(email: string): Promise<User> {
+		const user = this.repo.create({ email });
+		return this.repo.save(user);
 	}
 
-	async update(id: number, userData: Partial<User>): Promise<User | null> {
-		await getRepo().update(id, userData);
-		return getRepo().findOneBy({ id });
+	async update(id: number, input: UpdateUserInput): Promise<User | null> {
+		if (input.email !== undefined) {
+			await this.repo.update(id, { email: input.email });
+		}
+		return this.repo.findOneBy({ id });
 	}
 
 	async delete(id: number): Promise<boolean> {
-		const result = await getRepo().delete(id);
-		return (
-			result.affected !== null &&
-			result.affected !== undefined &&
-			result.affected > 0
-		);
+		const result = await this.repo.delete(id);
+		return (result.affected ?? 0) > 0;
 	}
 }
